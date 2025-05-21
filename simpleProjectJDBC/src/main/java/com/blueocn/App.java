@@ -56,8 +56,18 @@ public class App {
         System.out.println("\n*** DELETE_BY_ID ***");
         users.forEach(System.out::println);
 
+        // Get all limit
+        System.out.println("\n*** LIMIT ***");
+        userDao.getAllLimit(2).forEach(System.out::println);
+
+        System.out.println("\n*** PAGED ***");
+        for (int i = 1; i < 11; i++) {
+            System.out.println("Page number " + i);
+            userDao.getAllPaged(i, 2).forEach(System.out::println);
+        }
+
         // --- Order DAO ---
-        System.out.println("**** ORDERS ****");
+        System.out.println("\n**** ORDERS ****");
         OrderDao orderDao = new OrderDao();
 
         // Read all

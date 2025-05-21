@@ -19,6 +19,8 @@ public class UserDao implements Dao<User, Integer> {
     private static final String CREATE = "INSERT INTO Users (user_id, username, email, password, role, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
     private static final String UPDATE = "UPDATE Users SET username = ?, email = ?, password = ?, role = ? WHERE user_id = ?";
     private static final String DELETE = "DELETE FROM Users WHERE user_id = ? LIMIT 1";
+    private static final String GET_ALL_LIMIT = "SELECT user_id, username, email, password, role, created_at, updated_at FROM Users ORDER BY username LIMIT ?";
+    private static final String GET_ALL_PAGED = "SELECT user_id, username, email, password, role, created_at, updated_at FROM Users ORDER BY username LIMIT ? OFFSET ?";
 
     @Override
     public List<User> getAll() {
@@ -74,7 +76,7 @@ public class UserDao implements Dao<User, Integer> {
             if (users.isEmpty()) {
                 return Optional.empty();
             }
-            return Optional.of(users.get(0));
+            return Optional.of(users.getFirst());
         } catch (SQLException e) {
             DatabaseUtils.handleSqlException("UserDao.getOne", e, LOGGER);
         }
@@ -124,6 +126,40 @@ public class UserDao implements Dao<User, Integer> {
             }
             DatabaseUtils.handleSqlException("UserDao.delete", e, LOGGER);
         }
+    }
+
+    public List<User> getAllLimit(int limit) {
+        List<User> users = new ArrayList<>();
+        Connection connection = DatabaseUtils.getConnection();
+        try (PreparedStatement statement = connection.prepareStatement(GET_ALL_LIMIT)) {
+            statement.setInt(1, limit);
+            ResultSet rs = statement.executeQuery();
+            users = this.processResultSet(rs);
+            rs.close();
+
+        } catch (SQLException e) {
+            DatabaseUtils.handleSqlException("UserDao.getAllLimit", e, LOGGER);
+        }
+        return users;
+    }
+
+    public List<User> getAllPaged(int pageNumber, int limit) {
+
+        List<User> users = new ArrayList<>();
+        Connection connection = DatabaseUtils.getConnection();
+        int offset = (pageNumber - 1) * limit ;
+
+        try (PreparedStatement statement = connection.prepareStatement(GET_ALL_PAGED)) {
+            statement.setInt(1, limit);
+            statement.setInt(2, offset);
+            ResultSet rs = statement.executeQuery();
+            users = this.processResultSet(rs);
+            rs.close();
+
+        } catch (SQLException e) {
+            DatabaseUtils.handleSqlException("UserDao.getAllPaged", e, LOGGER);
+        }
+        return users;
     }
 
     private List<User> processResultSet(ResultSet rs) throws SQLException {
